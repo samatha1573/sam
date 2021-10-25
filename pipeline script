@@ -1,0 +1,40 @@
+pipeline {
+  agent any
+stages {
+    stage('SCM') {
+      steps {
+        git branch: 'main', url: 'https://github.com/samatha1573/anisiblelampstack.git'
+      }
+    }
+stage('lampstackdeployment') {
+      steps {
+        sh label: '', script: '''#!/bin/bash
+set -x
+for i in \'172.31.11.54\'
+do
+    echo "output: $i"
+
+WORKDIR="/home/ubuntu/playbook"
+
+HOST="ubuntu@$i"
+
+mkdir -p "$HOST:$WORKDIR"
+chmod -R 777 "$HOST:$WORKDIR"
+JENKINS_DIR="/var/lib/jenkins/workspace/ansiblejob"
+
+echo rsync
+rsync -rv $JENKINS_DIR/ $HOST:$WORKDIR/
+
+
+echo "--------------------------------------------------------------------------"
+
+echo Running Playbook
+ssh $HOST " cd $WORKDIR; ansible-playbook -i hosts lampstack.yml "
+
+done
+'''
+      }
+    }
+  }
+}
+
